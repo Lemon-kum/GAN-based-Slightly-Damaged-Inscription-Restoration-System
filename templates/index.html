@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>轻微缺损碑文修复系统</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 10px;
+        background-image: url("../static/background.jpg");
+    }
+    .aa{
+        /*外边框*/
+        width: 800px;
+        height: 560px;
+        border: 1px solid #008080;
+        margin: auto;
+    }
+    .aa1{
+        /*内边框*/
+        width: 800px;
+        height: 80px;
+        border: 1px solid #008080;
+        margin: auto;
+    }
+    .aa2{
+        width: 800px;
+        height: 60px;
+        padding: 20px 0 0 0;
+        border: 1px solid #008080;
+    }
+    .aa3{
+        width: 800px;
+        height: 33px;
+        border: 1px solid #008080;
+    }
+    table{
+        table-layout: fixed;/*固定表格规格*/
+        border: 1px solid #008080;
+    }
+    h1 {
+        text-align: center;
+    }
+    .button-group {
+        display: flex;
+        justify-content: left;
+        padding-left: 20px;
+        margin-bottom: 10px;
+    }
+    .button {
+        margin: 0 10px; /* 按钮间距 */
+        padding: 5px 10px;
+        width: 100px;
+        height: 40px;
+        background-color: #008080;
+        border-radius: 10px;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    .button:hover {
+        background-color: #26aa7a;
+    }
+    .image-container {
+        margin: auto;
+        width: 400px; /* 设定图片窗口的宽度 */
+        height: 100px; /* 设定图片窗口的高度 */
+        position: relative; /* 用于绝对定位子元素（如覆盖在图片上的文本） */
+    }
+    #original-image, #processed-image {
+        max-width: 100%; /* 限制图片宽度 */
+        height: auto;
+        border: 0px solid #ccc;
+    }
+    #file-input {
+        display: none; /* 隐藏文件输入 */
+    }
+</style>
+</head>
+
+<body>
+<div class="aa">
+
+    <div class="aa1">
+        <h1 style="font-family: sans-serif;color: #008080;">轻微缺损碑文修复系统</h1>
+    </div>
+
+    <div class="aa2">
+        <div class="button-group">
+            <p style="line-height: 10px;">预处理功能：</p>
+            <button class="button" onclick="invert()">颜色取反</button>
+            <button class="button" onclick="grayscale()">灰度化</button>
+            <button class="button" onclick="binarize()">二值化</button>
+            <button class="button" onclick="denoise()">去噪</button>
+            <button class="button" onclick="enhance()">图像增强</button>
+        </div>
+    </div>
+
+    <div class="aa2">
+        <div class="button-group" style="padding-right: 255px;">
+            <p style="line-height: 10px;">修复功能：</p>
+            <button class="button" onclick="Restore()">文字修复</button>
+        </div>
+    </div>
+
+    <table border="1" width="801.5px" height="200px" align="center">
+		<tr>
+			<td align="left" valign="top">
+                <label style="padding-left: 20px;">原图：</label>
+                <br/>
+                <img id="original-image" src="" alt="原图" style="padding-left: 20px;">
+            </td>
+			<td align="left" valign="top">
+                <label style="padding-left: 20px;">处理图：</label>
+                <br>
+                <img id="processed-image" src="" alt="处理图" style="padding-left: 20px;">
+            </td>
+		</tr>
+    </table>
+
+    <div class="aa2">
+        <div class="button-group" style="justify-content: center;">
+            <label class="button" for="file-input" style="width: 80px; height: 30px; text-align: center;line-height: 30px;font-size: 14px;margin-right: 30px;">选择文件</label>
+            <input type="file" id="file-input" accept="image/*" onchange="displayImage(event)">
+            <button class="button" onclick="saveImage()" style="margin-right: 30px;margin-left: 30px;">保存</button>
+        </div>
+    </div>
+
+    <div class="aa3">
+        <p style="line-height: 2px;padding-left: 20px;color: #000000;">注：修复流程为颜色取反-->灰度化-->二值化-->去噪-->图像增强-->文字修复。</p>
+    </div>
+</div>
+
+
+<script>
+//显示原图
+function displayImage(event) {
+    var file = event.target.files[0];
+    var reader = new FileReader();
+    reader.onload = function(event) {
+        document.getElementById('original-image').src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+//下载图片
+function saveImage() {
+    var image = document.getElementById('processed-image');
+    var imageSrc = image.src;
+
+    var link = document.createElement('a');
+    link.href = imageSrc;
+    link.download = 'processedimg.jpg'; // 设置下载的文件名
+
+    // 触发点击事件
+    link.click();
+}
+
+//颜色取反
+function invert(){
+    const imageUpload = document.getElementById('file-input');
+    const invertedImage = document.getElementById('processed-image');
+
+    const formData = new FormData();
+    formData.append('file', imageUpload.files[0]);
+
+    fetch('/invert', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        invertedImage.src = URL.createObjectURL(blob);
+    })
+    .catch(error => console.error(error));
+}
+
+//灰度化
+function grayscale() {
+    const imageUpload = document.getElementById('file-input');
+    const displayImage = document.getElementById('processed-image');
+
+    const formData = new FormData();
+    formData.append('file', imageUpload.files[0]);
+
+    fetch('/gray', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        displayImage.src = URL.createObjectURL(blob);
+    })
+    .catch(error => console.error(error));
+}
+
+//二值化
+function binarize() {
+    const imageUpload = document.getElementById('file-input');
+    const displayImage = document.getElementById('processed-image');
+
+    const formData = new FormData();
+    formData.append('file', imageUpload.files[0]);
+
+    fetch('/binarize', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        displayImage.src = URL.createObjectURL(blob);
+    })
+    .catch(error => console.error(error));
+}
+
+//去噪
+function denoise() {
+    const imageUpload = document.getElementById('file-input');
+    const displayImage = document.getElementById('processed-image');
+
+    const formData = new FormData();
+    formData.append('file', imageUpload.files[0]);
+
+    fetch('/denoise', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        displayImage.src = URL.createObjectURL(blob);
+    })
+    .catch(error => console.error(error));
+}
+
+//图像增强
+function enhance() {
+    const imageUpload = document.getElementById('file-input');
+    const displayImage = document.getElementById('processed-image');
+
+    const formData = new FormData();
+    formData.append('file', imageUpload.files[0]);
+
+    fetch('/enhance', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        displayImage.src = URL.createObjectURL(blob);
+    })
+    .catch(error => console.error(error));
+}
+
+//文字修复
+function Restore() {
+    alert('文字修复功能尚未实现');
+    const imageUpload = document.getElementById('file-input');
+    const displayImage = document.getElementById('processed-image');
+
+    const formData = new FormData();
+    formData.append('file', imageUpload.files[0]);
+
+    fetch('/Restore', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        displayImage.src = URL.createObjectURL(blob);
+    })
+    .catch(error => console.error(error));
+}
+
+
+</script>
+
+</body>
+</html>
